@@ -13,27 +13,12 @@ Multi-engine network stress testing tool with the following attack modules:
 - **ICMP Flood** - ICMP ping flood via multiprocessing workers
 - **Nmap Scan** - TCP Null scan (-T5 -sN) via subprocess
 
-### Security Tester (test.py)
-
-Web application security scanner that tests for:
-
-- SSL/HTTPS configuration and HSTS headers
-- Security headers (X-Frame-Options, CSP, XSS-Protection, etc.)
-- CSRF protection (ASP.NET ViewState/EventValidation)
-- SQL injection vulnerabilities
-- Password field security
-- Information disclosure (version leaks, error messages)
-- Brute force protection / rate limiting
-- Cross-site scripting (XSS)
-- Session management (cookie security flags)
-- HTML structure analysis (inline scripts, SRI)
-
 ## Installation
 
 ```bash
 # Clone and enter the repository
 git clone https://github.com/cyberxtom/DDOXER
-cd DDOX
+cd DDOXER
 
 # Create Python virtual environment
 python3 -m venv venv
@@ -46,9 +31,7 @@ pip install -r requirements.txt
 
 ## Usage
 
-All tools should be run with **sudo** due to raw socket access and elevated permissions required by certain attack modules.
-
-### DDOXER
+Must be run with **sudo** for raw socket access.
 
 ```bash
 sudo venv/bin/python main.py
@@ -66,17 +49,6 @@ Interactive menu options:
 9. Advanced Configuration
 10. Exit
 
-### Security Tester
-
-```bash
-sudo venv/bin/python test.py <target-url>
-```
-
-Example:
-```bash
-sudo venv/bin/python test.py https://example.com/login.aspx
-```
-
 ## Requirements
 
 - Python 3.8+
@@ -85,11 +57,10 @@ sudo venv/bin/python test.py https://example.com/login.aspx
 
 ## Dependencies
 
-- requests, ping3, scapy, python-nmap, beautifulsoup4
+- requests, ping3, scapy, python-nmap
 
 ## Notes
 
 - SYN flood and ICMP flood modules require root privileges.
 - HTTP-only mode runs automatically when not running as root.
-- The security tester disables SSL verification for testing purposes.
 - Only test systems you own or have explicit permission to test.
