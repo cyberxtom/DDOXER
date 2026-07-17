@@ -1,0 +1,5 @@
+requests==2.31.0
+ping3==4.0.4
+scapy==2.5.0
+python-nmap==0.7.1
+beautifulsoup4==4.12.2
