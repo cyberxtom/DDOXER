@@ -32,7 +32,7 @@ Web application security scanner that tests for:
 
 ```bash
 # Clone and enter the repository
-git clone <repo-url>
+git clone https://github.com/cyberxtom/DDOXER
 cd DDOX
 
 # Create Python virtual environment
