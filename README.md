@@ -1,104 +1,262 @@
-# DDOXER
+<div align="center">
+  <pre>
+████████╗██████╗  ██████╗ ██╗  ██╗███████╗██████╗
+╚══██╔══╝██╔══██╗██╔═══██╗╚██╗██╔╝██╔════╝██╔══██╗
+   ██║   ██║  ██║██║   ██║ ╚███╔╝ █████╗  ██████╔╝
+   ██║   ██║  ██║██║   ██║ ██╔██╗ ██╔══╝  ██╔══██╗
+   ██║   ██████╔╝╚██████╔╝██╔╝ ██╗███████╗██║  ██║
+   ╚═╝   ╚═════╝  ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+  </pre>
+  <p><strong>Multi-Server Distributed Network Stress Testing</strong></p>
+  <p>
+    <a href="https://github.com/cyberxtom/DDOXER"><img src="https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square&logo=python&logoColor=white"></a>
+    <a href="https://github.com/cyberxtom/DDOXER"><img src="https://img.shields.io/badge/platform-linux-red?style=flat-square&logo=linux&logoColor=white"></a>
+    <a href="https://github.com/cyberxtom/DDOXER"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square"></a>
+    <a href="https://t.me/BotFather"><img src="https://img.shields.io/badge/telegram-bot-26A5E4?style=flat-square&logo=telegram&logoColor=white"></a>
+  </p>
+</div>
 
-Multi-server distributed network stress testing tool controlled via Telegram.
+---
 
 ## Architecture
 
-One Telegram bot, unlimited servers. Deploy on multiple servers with the same bot token -- every server receives every command simultaneously. A single `/attack` command triggers all your servers to attack the target at once.
+Deploy on **unlimited servers** with the same Telegram bot token. One command reaches every server simultaneously.
 
 ```
-Telegram Bot  <--  You send one command
-    |
-    +-- Server 1 (VPS/cloud)  -->  SYN flood + HTTP + ICMP
-    +-- Server 2 (VPS/cloud)  -->  SYN flood + HTTP + ICMP
-    +-- Server 3 (VPS/cloud)  -->  SYN flood + HTTP + ICMP
-    +-- ...                   -->  ...
+  YOUR TELEGRAM         BOT API              YOUR SERVERS
+  ┌─────────┐         ┌──────────┐        ┌─────────────────┐
+  │  /attack │ ────── │ Telegram │ ────── │ Server 1 (VPS)  │ ── SYN + HTTP + ICMP
+  │  /target │         │   Bot    │         ├─────────────────┤
+  │  /stop   │         │  Server  │ ────── │ Server 2 (VPS)  │ ── SYN + HTTP + ICMP
+  └─────────┘         └──────────┘         ├─────────────────┤
+                                           │ Server 3 (VPS)  │ ── SYN + HTTP + ICMP
+                                           ├─────────────────┤
+                                           │ ...               │
+                                           └─────────────────┘
 ```
+
+<details>
+<summary><strong>How it works</strong></summary>
+<br>
+Each server runs <code>bot.py</code> with the same bot token. All instances poll Telegram independently — every command broadcast to the chat is received by every server. No master node, no coordination server, no single point of failure.
+</details>
+
+---
 
 ## Attack Modules
 
-| Module | Type | Description |
-|--------|------|-------------|
-| SYN Flood | L4 | Raw TCP SYN packet flood via Scapy (requires root) |
-| HTTP Flood | L7 | Concurrent HTTP request flood via threads |
-| ICMP Flood | L3 | Ping flood via multiprocessing workers |
-| Nmap Scan | Recon | TCP Null scan (-T5 -sN) |
-| Full Attack | All | Launches all modules in parallel |
+<table>
+<thead>
+<tr>
+  <th width="140">Module</th>
+  <th width="80">Layer</th>
+  <th>Description</th>
+  <th width="100">Root</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>SYN Flood</strong></td>
+  <td><code>L4</code></td>
+  <td>Raw TCP SYN packet flood via Scapy (<code>sendpfast</code>)</td>
+  <td><span style="color:#e74c3c">required</span></td>
+</tr>
+<tr>
+  <td><strong>HTTP Flood</strong></td>
+  <td><code>L7</code></td>
+  <td>Concurrent GET request flood across multiple threads</td>
+  <td><span style="color:#2ecc71">optional</span></td>
+</tr>
+<tr>
+  <td><strong>ICMP Flood</strong></td>
+  <td><code>L3</code></td>
+  <td>Ping flood via multiprocessing workers</td>
+  <td><span style="color:#e74c3c">required</span></td>
+</tr>
+<tr>
+  <td><strong>Nmap Scan</strong></td>
+  <td><code>Recon</code></td>
+  <td>TCP Null scan (<code>-T5 -sN</code>) for reconnaissance</td>
+  <td><span style="color:#f39c12">partial</span></td>
+</tr>
+<tr>
+  <td><strong>Full Attack</strong></td>
+  <td><code>All</code></td>
+  <td>Launches SYN + HTTP + ICMP + Nmap simultaneously</td>
+  <td><span style="color:#e74c3c">required</span></td>
+</tr>
+</tbody>
+</table>
 
-## Installation (per server)
+---
+
+## Quick Start
+
+### 1. Create a Telegram Bot
+
+Talk to <a href="https://t.me/BotFather"><code>@BotFather</code></a> on Telegram and create a new bot. Copy the token.
+
+### 2. Deploy on Each Server
 
 ```bash
-# Install nmap
-sudo apt-get update && sudo apt-get install -y nmap
+# Install dependencies
+sudo apt-get update
+sudo apt-get install -y nmap python3 python3-venv git
 
-# Clone repo
+# Clone the repository
 git clone https://github.com/cyberxtom/DDOXER
 cd DDOXER
 
-# Create virtual environment
+# Setup virtual environment
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-## Telegram Bot Setup
-
-### 1. Create a Telegram bot
-
-Talk to [@BotFather](https://t.me/BotFather) on Telegram and create a new bot. Copy the bot token.
-
-### 2. Set environment variables
-
-On every server, set these before running the bot:
+### 3. Configure
 
 ```bash
-export DDOXER_BOT_TOKEN="your_bot_token_from_botfather"
+# Set your Telegram bot token and password
+export DDOXER_BOT_TOKEN="your_token_from_botfather"
 export DDOXER_BOT_PASSWORD="your_secret_password"
 
-# Optional: restrict to specific Telegram user IDs (comma separated)
+# Optional: restrict to specific Telegram user IDs
 export DDOXER_ALLOWED_USERS="123456789,987654321"
 ```
 
-### 3. Run the bot (on every server)
+### 4. Launch
+
+On every server:
 
 ```bash
 sudo venv/bin/python bot.py
 ```
 
-All servers share the same bot token. When you send a command, every server receives it and acts.
+---
 
 ## Bot Commands
 
-| Command | Description |
-|---------|-------------|
-| `/login <password>` | Authenticate (first command) |
-| `/target <ip> [port]` | Set target IP and optional port |
-| `/attack` | Show attack type selection menu |
-| `/stop` | Stop current attack on all servers |
-| `/status` | Show current target and attack state |
-| `/config` | Show full configuration |
-| `/help` | Show help message |
+<table>
+<thead>
+<tr>
+  <th width="200">Command</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>/login &lt;password&gt;</code></td>
+  <td>Authenticate with the bot password</td>
+</tr>
+<tr>
+  <td><code>/target &lt;ip&gt; [port]</code></td>
+  <td>Set target IP address and optional port</td>
+</tr>
+<tr>
+  <td><code>/attack</code></td>
+  <td>Open attack selection menu with inline buttons</td>
+</tr>
+<tr>
+  <td><code>/stop</code></td>
+  <td>Stop the current attack immediately</td>
+</tr>
+<tr>
+  <td><code>/status</code></td>
+  <td>Show target and attack state</td>
+</tr>
+<tr>
+  <td><code>/config</code></td>
+  <td>Display full configuration parameters</td>
+</tr>
+<tr>
+  <td><code>/help</code></td>
+  <td>Show help information</td>
+</tr>
+</tbody>
+</table>
 
-## Usage Example
+---
+
+## Usage Flow
 
 ```
-1. /login mypassword           (on any chat with the bot)
-2. /target 203.0.113.50 80     (sets target on all servers)
-3. /attack -> select Full      (all servers attack simultaneously)
-4. /stop                        (stops all servers)
+[User]                    [Bot]
+  │                         │
+  ├─ /login mypassword ─────┤
+  │                         ├─ Authorized
+  │                         │
+  ├─ /target 203.0.113.50 ──┤
+  │                         ├─ Target set on ALL servers
+  │                         │
+  ├─ /attack ───────────────┤
+  │                         ├─ [Full Attack] [SYN] [HTTP]
+  │                         ├─ [ICMP] [Nmap] [Stop]
+  │                         │
+  ├─ [Full Attack] ────────┤
+  │                         ├─ All servers start attacking
+  │                         │
+  ├─ /stop ─────────────────┤
+  │                         ├─ All servers stop
 ```
+
+---
+
+## Deployment Strategies
+
+<table>
+<thead>
+<tr>
+  <th>Strategy</th>
+  <th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>Identical config</strong></td>
+  <td>Same target, same attack type on every server — maximum traffic volume</td>
+</tr>
+<tr>
+  <td><strong>Split targets</strong></td>
+  <td>Different targets per server group — attack multiple hosts</td>
+</tr>
+<tr>
+  <td><strong>Layer separation</strong></td>
+  <td>Some servers do SYN flood (L4), others do HTTP (L7) — cover both layers</td>
+</tr>
+<tr>
+  <td><strong>Geographic spread</strong></td>
+  <td>Servers across different regions — bypass geographic filtering</td>
+</tr>
+</tbody>
+</table>
+
+---
 
 ## Requirements
 
-- Python 3.8+
-- Nmap: `sudo apt-get install nmap`
-- Linux with root access (SYN flood requires raw sockets)
-- Multiple VPS/cloud servers for distributed attacks
+<p>
+  <img src="https://img.shields.io/badge/python-3.8+-blue?style=flat-square&logo=python">
+  <img src="https://img.shields.io/badge/nmap-required-orange?style=flat-square&logo=nmap">
+  <img src="https://img.shields.io/badge/os-linux-red?style=flat-square&logo=linux">
+  <img src="https://img.shields.io/badge/root-required_for_SYN/ICMP-red?style=flat-square">
+</p>
 
-## Notes
+- **Python 3.8+** — virtual environment recommended
+- **Nmap** — install via `sudo apt-get install nmap`
+- **Linux** — SYN flood requires raw socket access
+- **Root** — required for SYN flood and ICMP flood modules
 
-- SYN flood and ICMP flood require root privileges.
-- HTTP-only mode runs automatically when not running as root.
-- The bot uses the same python-telegram-bot library -- all servers poll the same bot and receive the same updates.
-- Only test systems you own or have explicit permission to test.
+---
+
+## Legal
+
+> This tool is for authorized security testing and research only.
+> You must own the target system or have explicit written permission.
+> The authors are not responsible for any misuse or damage caused.
+
+---
+
+<div align="center">
+  <sub>Built with Python, Scapy, and python-telegram-bot</sub>
+</div>
