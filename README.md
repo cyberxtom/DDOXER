@@ -7,7 +7,7 @@
 ██████╔╝███████║╚██████╔╝██╔╝ ██╗███████╗██║  ██║
 ╚═════╝ ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
   </pre>
-  <p><strong>Multi-Server Distributed Network Stress Testing</strong></p>
+  <p><strong>A simple Multi OSI layer DDOS tool </strong></p>
   <p>
     <a href="https://github.com/cyberxtom/DDOXER"><img src="https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square&logo=python&logoColor=white"></a>
     <a href="https://github.com/cyberxtom/DDOXER"><img src="https://img.shields.io/badge/platform-linux-red?style=flat-square&logo=linux&logoColor=white"></a>
@@ -18,22 +18,6 @@
 
 ---
 
-## Architecture
-
-Deploy on **unlimited servers** with the same Telegram bot token. One command reaches every server simultaneously.
-
-```
-  YOUR TELEGRAM         BOT API              YOUR SERVERS
-  ┌─────────┐         ┌──────────┐        ┌─────────────────┐
-  │  /attack │ ────── │ Telegram │ ────── │ Server 1 (VPS)  │ ── SYN + HTTP + ICMP
-  │  /target │         │   Bot    │         ├─────────────────┤
-  │  /stop   │         │  Server  │ ────── │ Server 2 (VPS)  │ ── SYN + HTTP + ICMP
-  └─────────┘         └──────────┘         ├─────────────────┤
-                                           │ Server 3 (VPS)  │ ── SYN + HTTP + ICMP
-                                           ├─────────────────┤
-                                           │ ...               │
-                                           └─────────────────┘
-```
 
 <details>
 <summary><strong>How it works</strong></summary>
@@ -178,29 +162,6 @@ sudo venv/bin/python bot.py
 
 ---
 
-## Usage Flow
-
-```
-[User]                    [Bot]
-  │                         │
-  ├─ /login mypassword ─────┤
-  │                         ├─ Authorized
-  │                         │
-  ├─ /target 203.0.113.50 ──┤
-  │                         ├─ Target set on ALL servers
-  │                         │
-  ├─ /attack ───────────────┤
-  │                         ├─ [Full Attack] [SYN] [HTTP]
-  │                         ├─ [ICMP] [Nmap] [Stop]
-  │                         │
-  ├─ [Full Attack] ────────┤
-  │                         ├─ All servers start attacking
-  │                         │
-  ├─ /stop ─────────────────┤
-  │                         ├─ All servers stop
-```
-
----
 
 ## Deployment Strategies
 
