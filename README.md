@@ -1,66 +1,104 @@
-# DDOX
+# DDOXER
 
-Network stress testing and web application security auditing tools.
+Multi-server distributed network stress testing tool controlled via Telegram.
 
-## Tools
+## Architecture
 
-### DDOXER (main.py)
+One Telegram bot, unlimited servers. Deploy on multiple servers with the same bot token -- every server receives every command simultaneously. A single `/attack` command triggers all your servers to attack the target at once.
 
-Multi-engine network stress testing tool with the following attack modules:
+```
+Telegram Bot  <--  You send one command
+    |
+    +-- Server 1 (VPS/cloud)  -->  SYN flood + HTTP + ICMP
+    +-- Server 2 (VPS/cloud)  -->  SYN flood + HTTP + ICMP
+    +-- Server 3 (VPS/cloud)  -->  SYN flood + HTTP + ICMP
+    +-- ...                   -->  ...
+```
 
-- **SYN Flood** - Raw packet flood via Scapy (requires root)
-- **HTTP Layer 7 Flood** - Concurrent HTTP request flood via multiple threads
-- **ICMP Flood** - ICMP ping flood via multiprocessing workers
-- **Nmap Scan** - TCP Null scan (-T5 -sN) via subprocess
+## Attack Modules
 
-## Installation
+| Module | Type | Description |
+|--------|------|-------------|
+| SYN Flood | L4 | Raw TCP SYN packet flood via Scapy (requires root) |
+| HTTP Flood | L7 | Concurrent HTTP request flood via threads |
+| ICMP Flood | L3 | Ping flood via multiprocessing workers |
+| Nmap Scan | Recon | TCP Null scan (-T5 -sN) |
+| Full Attack | All | Launches all modules in parallel |
+
+## Installation (per server)
 
 ```bash
-# Clone and enter the repository
+# Install nmap
+sudo apt-get update && sudo apt-get install -y nmap
+
+# Clone repo
 git clone https://github.com/cyberxtom/DDOXER
 cd DDOXER
 
-# Create Python virtual environment
+# Create virtual environment
 python3 -m venv venv
-
-# Activate virtual environment and install dependencies
 source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-## Usage
+## Telegram Bot Setup
 
-Must be run with **sudo** for raw socket access.
+### 1. Create a Telegram bot
+
+Talk to [@BotFather](https://t.me/BotFather) on Telegram and create a new bot. Copy the bot token.
+
+### 2. Set environment variables
+
+On every server, set these before running the bot:
 
 ```bash
-sudo venv/bin/python main.py
+export DDOXER_BOT_TOKEN="your_bot_token_from_botfather"
+export DDOXER_BOT_PASSWORD="your_secret_password"
+
+# Optional: restrict to specific Telegram user IDs (comma separated)
+export DDOXER_ALLOWED_USERS="123456789,987654321"
 ```
 
-Interactive menu options:
-1. Start Full Attack (Nmap + SYN + HTTP + ICMP)
-2. Run Nmap Scan Only (-T5 -sN)
-3. Start HTTP Flood Only
-4. Start SYN Flood Only (requires root)
-5. Start ICMP Flood Only
-6. Stop All Attacks
-7. Show Status
-8. Configure Target
-9. Advanced Configuration
-10. Exit
+### 3. Run the bot (on every server)
+
+```bash
+sudo venv/bin/python bot.py
+```
+
+All servers share the same bot token. When you send a command, every server receives it and acts.
+
+## Bot Commands
+
+| Command | Description |
+|---------|-------------|
+| `/login <password>` | Authenticate (first command) |
+| `/target <ip> [port]` | Set target IP and optional port |
+| `/attack` | Show attack type selection menu |
+| `/stop` | Stop current attack on all servers |
+| `/status` | Show current target and attack state |
+| `/config` | Show full configuration |
+| `/help` | Show help message |
+
+## Usage Example
+
+```
+1. /login mypassword           (on any chat with the bot)
+2. /target 203.0.113.50 80     (sets target on all servers)
+3. /attack -> select Full      (all servers attack simultaneously)
+4. /stop                        (stops all servers)
+```
 
 ## Requirements
 
 - Python 3.8+
-- Nmap (for scan functionality): `sudo apt-get install nmap`
-- Linux environment recommended (SYN flood requires raw sockets)
-
-## Dependencies
-
-- requests, ping3, scapy, python-nmap
+- Nmap: `sudo apt-get install nmap`
+- Linux with root access (SYN flood requires raw sockets)
+- Multiple VPS/cloud servers for distributed attacks
 
 ## Notes
 
-- SYN flood and ICMP flood modules require root privileges.
+- SYN flood and ICMP flood require root privileges.
 - HTTP-only mode runs automatically when not running as root.
+- The bot uses the same python-telegram-bot library -- all servers poll the same bot and receive the same updates.
 - Only test systems you own or have explicit permission to test.
